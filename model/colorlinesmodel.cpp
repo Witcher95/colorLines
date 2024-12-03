@@ -30,6 +30,13 @@ void ColorLinesModel::loadBallsData() {
         was_balls_data_loaded_invoke = true;
     }
 
+    for (auto &row : m_board) {
+        for (auto &cell : row) {
+            if (cell.visible == true) {
+                --m_empty_cell;
+            }
+        }
+    }
 }
 
 QModelIndex ColorLinesModel::index(int row, int column, const QModelIndex &parent) const {
@@ -53,7 +60,10 @@ int ColorLinesModel::columnCount([[maybe_unused]] const QModelIndex &parent) con
 }
 
 QVariant ColorLinesModel::data(const QModelIndex &index, int role) const {
-    if (!index.isValid()) return QVariant();if (role == kColorRole) {
+    if (!index.isValid()) {
+        return QVariant();
+    }
+    if (role == kColorRole) {
         return m_board[index.row()][index.column()].color;
     } else if (role == kVisibleRole) {
         return m_board[index.row()][index.column()].visible;
@@ -284,6 +294,8 @@ bool ColorLinesModel::isSequence(std::vector<std::pair<int, int>> &vector_row_co
 
             // Начисляем баллы
             m_score += min_scores;
+
+            m_empty_cell += horizontally >= m_sequence ? horizontally : vertically;
 
             vector_row_column.clear();
 

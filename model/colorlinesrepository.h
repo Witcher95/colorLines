@@ -14,12 +14,11 @@ struct BallData
     QColor color;
 };
 
-class ColorLinesRepository {
+class ColorLinesRepository: QObject {
 public:
     ColorLinesRepository();
 
-    // Методы закрытия базы данных
-    void closeDb();
+    ~ColorLinesRepository();
 
     // Метод добавления записи с данными о шарике в таблицу БД
     bool insertRecord(const BallData &data);
@@ -40,10 +39,7 @@ public:
     BallData toBallData(int row, int column, QColor &color, bool visible);
 
 private:
-    // Сам объект базы данных, с которым будет производиться работа
-    QSqlDatabase  db;
-
-    bool openDb();
+    void openDb();
 
     // Метод создания таблицы
     void createTable();

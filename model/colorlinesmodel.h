@@ -71,7 +71,7 @@ signals:
     void gameOver();
 
 private:
-    ColorLinesRepository *colorLinesRepository = new ColorLinesRepository();;
+    ColorLinesRepository *colorLinesRepository = new ColorLinesRepository();
 
     // Минимальное количество очков, которые можно получить за правильную последовательность
     static constexpr int min_scores = 10;
@@ -91,7 +91,7 @@ private:
     int m_score{};
 
     // Кол-во пустых ячеек в таблице
-    int m_empty_cell;
+    int m_empty_cell{};
 
     /* Флаг, который означает, что был вызван метод загрузки данных о шариках для игровой таблицы.
      * Применяется при первом запуске приложения, если есть сохранённое состояние игровой таблицы, т.е расположение шариков на определеленных позициях,

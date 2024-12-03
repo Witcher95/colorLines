@@ -5,63 +5,73 @@ ColorLinesRepository::ColorLinesRepository() {
     openDb();
 }
 
-void ColorLinesRepository::closeDb() {
-    db.close();
-}
-
-bool ColorLinesRepository::openDb() {
+void ColorLinesRepository::openDb() {
     // Подключение к базе данных SQLite
-    db = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("mydatabase.db");
     if (!db.open()) {
         qDebug() << "Database connection error: " << db.lastError().text();
-        return false;
     } else {
         qDebug() << "Database connection successfully!";
 
         createTable();
+    }
+}
 
-        return true;
+ColorLinesRepository::~ColorLinesRepository() {
+    qDebug() << "Closing db...";
+    //закрываем БД
+    QSqlDatabase db = QSqlDatabase::database();
+    if(db.isValid() && db.isOpen()){
+        qDebug()<<"db close!";
+        db.close();
     }
 }
 
 void ColorLinesRepository::createTable() {
-    // Создание таблицы с данными шариков с игровой таблицы
-    QSqlQuery query;
-    if (!query.exec("CREATE TABLE IF NOT EXISTS balls ("
-               "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-               "  row_number INTEGER NOT NULL,"
-               "  column_number INTEGER NOT NULL,"
-               "  visible BOOL NOT NULL,"
-                " red VARCHAR(20) NOT NULL CHECK(red !=''),"
-                " green VARCHAR(20) NOT NULL CHECK(green !=''),"
-                " blue VARCHAR(20) NOT NULL CHECK(blue !='')"
-                    ");")) {
-        qDebug() << "DataBase: error of create " << "balls";
-        qDebug() << query.lastError().text();
-    } else {
-        qDebug() << "DataBase: create table " << "balls " << "successfully!";
-    }
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        // Создание таблицы с данными шариков с игровой таблицы
+        QSqlQuery query;
+        if (!query.exec("CREATE TABLE IF NOT EXISTS balls ("
+                        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        "  row_number INTEGER NOT NULL,"
+                        "  column_number INTEGER NOT NULL,"
+                        "  visible BOOL NOT NULL,"
+                        " red VARCHAR(20) NOT NULL CHECK(red !=''),"
+                        " green VARCHAR(20) NOT NULL CHECK(green !=''),"
+                        " blue VARCHAR(20) NOT NULL CHECK(blue !='')"
+                        ");")) {
+            qDebug() << "DataBase: error of create " << "balls";
+            qDebug() << query.lastError().text();
+        } else {
+            qDebug() << "DataBase: create table " << "balls " << "successfully!";
+        }
 
-    // Создание таблицы с баллами
-    if (!query.exec("CREATE TABLE IF NOT EXISTS score ("
-                    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "  score INTEGER NOT NULL"
-                    ");")) {
-        qDebug() << "DataBase: error of create " << "score";
-        qDebug() << query.lastError().text();
-    } else {
-        qDebug() << "DataBase: create table " << "score " << "successfully!";
+        // Создание таблицы с баллами
+        if (!query.exec("CREATE TABLE IF NOT EXISTS score ("
+                        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        "  score INTEGER NOT NULL"
+                        ");")) {
+            qDebug() << "DataBase: error of create " << "score";
+            qDebug() << query.lastError().text();
+        } else {
+            qDebug() << "DataBase: create table " << "score " << "successfully!";
+        }
+    }  else {
+        qDebug() << "Database connection error: " << db.lastError().text();
     }
 }
 
 bool ColorLinesRepository::insertRecord(const BallData &data) {
-    QSqlQuery query;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-    int red = qRed(data.color.rgb());
-    int green = qGreen(data.color.rgb());
-    int blue = qBlue(data.color.rgb());
-    qDebug() << "Insert record about ball: row "<< data.row <<
+        int red = qRed(data.color.rgb());
+        int green = qGreen(data.color.rgb());
+        int blue = qBlue(data.color.rgb());
+        qDebug() << "Insert record about ball: row "<< data.row <<
             ", column " << data.column <<
             ", red " << red <<
             ", green " << green <<
@@ -69,106 +79,135 @@ bool ColorLinesRepository::insertRecord(const BallData &data) {
             ", visible " << data.visible <<
             "...";
 
-    query.prepare("INSERT INTO balls(row_number, column_number, visible, red, green, blue)" \
-                  "VALUES(:row_number, :column_number, :visible, :red, :green, :blue)");
-    query.bindValue(":row_number", data.row);
-    query.bindValue(":column_number", data.column);
-    query.bindValue(":visible", data.visible);
-    query.bindValue(":red", red);
-    query.bindValue(":green", green);
-    query.bindValue(":blue", blue);
-    if(!query.exec())
-    {
-        qDebug() << "insertRecord error: " << query.lastError();
-        return false;
-    } else {
-        qDebug() << "insertRecord successfully!";
-    }
+        query.prepare("INSERT INTO balls(row_number, column_number, visible, red, green, blue)" \
+                      "VALUES(:row_number, :column_number, :visible, :red, :green, :blue)");
+        query.bindValue(":row_number", data.row);
+        query.bindValue(":column_number", data.column);
+        query.bindValue(":visible", data.visible);
+        query.bindValue(":red", red);
+        query.bindValue(":green", green);
+        query.bindValue(":blue", blue);
+        if(!query.exec())
+        {
+            qDebug() << "insertRecord error: " << query.lastError();
+            return false;
+        } else {
+            qDebug() << "insertRecord successfully!";
+        }
 
-    return true;
+        return true;
+    } else {
+        qDebug() << "Database connection error: " << db.lastError().text();
+    }
 }
 
 bool ColorLinesRepository::insertScore(int score) {
-    QSqlQuery query;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-    qDebug() << "Insert record about score: "<< score << "...";
+        qDebug() << "Insert record about score: "<< score << "...";
 
-    query.prepare("INSERT INTO score(score)" \
-                  "VALUES(:score)");
-    query.bindValue(":score", score);
+        query.prepare("INSERT INTO score(score)" \
+                      "VALUES(:score)");
+        query.bindValue(":score", score);
 
-    if(!query.exec())
-    {
-        qDebug() << "insertScore error: " << query.lastError();
-        return false;
+        if(!query.exec())
+        {
+            qDebug() << "insertScore error: " << query.lastError();
+            return false;
+        } else {
+            qDebug() << "insertScore successfully!";
+        }
+
+        return true;
     } else {
-        qDebug() << "insertScore successfully!";
+        qDebug() << "Database connection error: " << db.lastError().text();
     }
-
-    return true;
 }
 
 bool ColorLinesRepository::updateRecord(int oldRow, int oldColumn, const BallData &data) {
-    QSqlQuery query;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-    qDebug() << "Update record about ball: oldRow " << oldRow << ", oldColumn " << oldColumn << "...";
+        qDebug() << "Update record about ball: oldRow " << oldRow << ", oldColumn " << oldColumn << "...";
 
-    query.prepare("UPDATE balls SET row_number = :row_number, column_number = :column_number, visible = :visible, red = :red, green = :green, blue = :blue " \
-                  "WHERE row_number = :old_row AND column_number = :old_column");
-    query.bindValue("old_row", oldRow);
-    query.bindValue("old_column", oldColumn);
-    query.bindValue(":row_number", data.row);
-    query.bindValue(":column_number", data.column);
-    query.bindValue(":visible", data.visible);
-    query.bindValue(":red", qRed(data.color.rgb()));
-    query.bindValue(":green", qGreen(data.color.rgb()));
-    query.bindValue(":blue", qBlue(data.color.rgb()));
-    if(!query.exec())
-    {
-        qDebug() << "updateRecord error: " << query.lastError();
-        return false;
+        query.prepare("UPDATE balls SET row_number = :row_number, column_number = :column_number, visible = :visible, red = :red, green = :green, blue = :blue " \
+                      "WHERE row_number = :old_row AND column_number = :old_column");
+        query.bindValue("old_row", oldRow);
+        query.bindValue("old_column", oldColumn);
+        query.bindValue(":row_number", data.row);
+        query.bindValue(":column_number", data.column);
+        query.bindValue(":visible", data.visible);
+        query.bindValue(":red", qRed(data.color.rgb()));
+        query.bindValue(":green", qGreen(data.color.rgb()));
+        query.bindValue(":blue", qBlue(data.color.rgb()));
+        if(!query.exec())
+        {
+            qDebug() << "updateRecord error: " << query.lastError();
+            return false;
+        } else {
+            qDebug() << "updateRecord successfully!";
+        }
+
+        return true;
     } else {
-        qDebug() << "updateRecord successfully!";
+        qDebug() << "Database connection error: " << db.lastError().text();
     }
-
-    return true;
 }
 
 void ColorLinesRepository::clear() {
-    QSqlQuery query;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-    query.exec("DELETE FROM balls");
-    query.exec("DELETE FROM score");
+        query.exec("DELETE FROM balls");
+        query.exec("DELETE FROM score");
+    } else {
+        qDebug() << "Database connection error: " << db.lastError().text();
+    }
 }
 
 int ColorLinesRepository::getScore() {
-    QSqlQuery query;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-    query.exec("SELECT max(score) FROM score");
-    while (query.next()) {
-        return query.value(0).toInt();
+        query.exec("SELECT max(score) FROM score");
+        while (query.next()) {
+            return query.value(0).toInt();
+        }
+    } else {
+        qDebug() << "Database connection error: " << db.lastError().text();
     }
 
     return 0;
 }
 
 std::vector<BallData> ColorLinesRepository::getBallsData() {
-    QSqlQuery query;
-
     std::vector<BallData> ballsData;
 
-    query.exec("SELECT row_number, column_number, visible, red, green, blue FROM balls");
-    while (query.next()) {
-        BallData ballData;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.isValid() && db.isOpen()) {
+        QSqlQuery query;
 
-        QColor *color = new QColor(query.value(3).toInt(), query.value(4).toInt(), query.value(5).toInt());
+        query.exec("SELECT row_number, column_number, visible, red, green, blue FROM balls");
+        while (query.next()) {
+            BallData ballData;
 
-        ballData.row = query.value(0).toInt();;
-        ballData.column = query.value(1).toInt();
-        ballData.color = *color;
-        ballData.visible = query.value(2).toBool();
+            QColor *color = new QColor(query.value(3).toInt(), query.value(4).toInt(), query.value(5).toInt());
 
-        ballsData.emplace_back(ballData);
+            ballData.row = query.value(0).toInt();;
+            ballData.column = query.value(1).toInt();
+            ballData.color = *color;
+            ballData.visible = query.value(2).toBool();
+
+            ballsData.emplace_back(ballData);
+        }
+
+    } else {
+        qDebug() << "Database connection error: " << db.lastError().text();
     }
 
     return ballsData;
